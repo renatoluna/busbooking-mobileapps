@@ -7,6 +7,9 @@
 //
 
 import UIKit
+import ACPCore
+import ACPAudience
+import ACPUserProfile
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -15,6 +18,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+        ACPCore.setLogLevel(.debug)
+        ACPCore.configure(withAppId: "YOURENVIRONMENTID")
+        ACPAudience.registerExtension()
+        ACPUserProfile.registerExtension()
+        ACPIdentity.registerExtension()
+        ACPLifecycle.registerExtension()
+        ACPSignal.registerExtension()
+        ACPCore.start {
+            ACPCore.lifecycleStart(nil)
+        }
         // Override point for customization after application launch.
         return true
     }

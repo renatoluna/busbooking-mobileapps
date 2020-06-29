@@ -22,6 +22,11 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 
+import com.adobe.marketing.mobile.Audience;
+
+import java.util.HashMap;
+import java.util.Map;
+
 
 //import com.adobe.marketing.mobile.MobileCore;
 
@@ -30,11 +35,15 @@ import android.view.View;
  */
 public class SecondActivity extends AppCompatActivity {
 
+    private Map<String, String> signals = new HashMap<String, String>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_second);
         setUpToolBar();
+
+        Audience.signalWithData(signals, null);
     }
 
     private void setUpToolBar() {
@@ -47,6 +56,8 @@ public class SecondActivity extends AppCompatActivity {
                 onBackPressed();
             }
         });
+
+        signals.put("view", toolbar.getTitle().toString());
     }
 
 

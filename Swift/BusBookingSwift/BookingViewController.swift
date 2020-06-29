@@ -7,6 +7,9 @@
 //
 
 import UIKit
+import ACPCore
+import ACPAudience
+import ACPUserProfile
 
 class BookingViewController: UIViewController {
 
@@ -14,7 +17,12 @@ class BookingViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Do any additional setup after loading the view.
+        let userIdentifier = ["idName": "userID"]
+        ACPCore.collectPii(userIdentifier)
+        
+        ACPIdentity.syncIdentifier("idName", identifier: "userID1234", authentication: ACPMobileVisitorAuthenticationState.unknown)
+        let signals = ["source": "San Francisco", "destination": "Las Vegas"]
+        ACPAudience.signal(withData: signals, callback: nil)
     }
     
 

@@ -30,6 +30,19 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import com.adobe.marketing.mobile.AdobeCallback;
+import com.adobe.marketing.mobile.Audience;
+import com.adobe.marketing.mobile.Identity;
+import com.adobe.marketing.mobile.InvalidInitException;
+import com.adobe.marketing.mobile.Lifecycle;
+import com.adobe.marketing.mobile.LoggingMode;
+import com.adobe.marketing.mobile.MobileCore;
+import com.adobe.marketing.mobile.Signal;
+import com.adobe.marketing.mobile.UserProfile;
+import com.adobe.marketing.mobile.VisitorID;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This activity class is responsible to show booking engine page and offer card.
@@ -38,10 +51,14 @@ public class BusBookingActivity extends AppCompatActivity {
 
     private TextView mTextGoingTo, mTextLeavingFrom, mTextSource, mTextDestination;
     private ImageButton mBtnFlip;
+    private Map<String, String> signals = new HashMap<String, String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Identity.syncIdentifier("idName", "userID1234", VisitorID.AuthenticationState.UNKNOWN);
+
         setContentView(R.layout.activity_bus_booking);
         setUpToolBar();
         mTextGoingTo =  findViewById(R.id.text_going_to);
@@ -82,6 +99,9 @@ public class BusBookingActivity extends AppCompatActivity {
 
         setSource("San Francisco");
         setDest("Las Vegas");
+
+
+        Audience.signalWithData(signals, null);
     }
 
 
@@ -98,6 +118,7 @@ public class BusBookingActivity extends AppCompatActivity {
             }
         });
 
+        signals.put("view", toolbar.getTitle().toString());
     }
 
 
@@ -211,25 +232,29 @@ public class BusBookingActivity extends AppCompatActivity {
         mTextGoingTo.setVisibility(View.VISIBLE);
         mTextDestination.setText(city);
         mTextDestination.setTextColor(ContextCompat.getColor(this, R.color.black_opac));
+        signals.put("destination", city);
 
     }
 
 
     private void setSource(String city) {
-
         mTextLeavingFrom.setVisibility(View.VISIBLE);
         mTextSource.setText(city);
         mTextSource.setTextColor(ContextCompat.getColor(this, R.color.black_opac));
+        signals.put("source", city);
     }
 
 
     @Override
     protected void onResume() {
+        MobileCore.setApplication(getApplication());
+        MobileCore.lifecycleStart(null);
         super.onResume();
     }
 
     @Override
     protected void onPause() {
+        MobileCore.lifecyclePause();
         super.onPause();
     }
 
