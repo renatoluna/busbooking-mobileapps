@@ -4,6 +4,9 @@
 target 'BusBookingSwift' do
   # Comment the next line if you don't want to use dynamic frameworks
   use_frameworks!
+  pod 'ACPGriffon', '~> 1.0'
+  pod 'ACPTarget', '~> 2.1'
+  pod 'ACPAnalytics', '~> 2.0'
   pod 'ACPAudience', '~> 2.0'
   pod 'ACPUserProfile', '~> 2.0'
   pod 'ACPCore', '~> 2.0'

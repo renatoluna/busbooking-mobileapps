@@ -10,6 +10,8 @@ import UIKit
 import ACPCore
 import ACPAudience
 import ACPUserProfile
+import ACPAnalytics
+import ACPTarget
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -21,6 +23,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         ACPCore.setLogLevel(.debug)
         ACPCore.configure(withAppId: "YOURENVIRONMENTID")
         ACPAudience.registerExtension()
+        ACPAnalytics.registerExtension()
         ACPUserProfile.registerExtension()
         ACPIdentity.registerExtension()
         ACPLifecycle.registerExtension()
@@ -28,6 +31,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         ACPCore.start {
             ACPCore.lifecycleStart(nil)
         }
+        
         // Override point for customization after application launch.
         return true
     }
@@ -44,6 +48,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillEnterForeground(_ application: UIApplication) {
         // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
+        ACPCore.lifecycleStart(["state": "appResume"])
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
