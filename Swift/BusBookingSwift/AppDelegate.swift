@@ -21,7 +21,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         ACPCore.setLogLevel(.debug)
-        ACPCore.configure(withAppId: "YOURENVIRONMENTID")
+        ACPCore.configure(withAppId: "c177896d8f03/12eff0ad3d19/launch-de1a97615b50")
         ACPAudience.registerExtension()
         ACPAnalytics.registerExtension()
         ACPUserProfile.registerExtension()
