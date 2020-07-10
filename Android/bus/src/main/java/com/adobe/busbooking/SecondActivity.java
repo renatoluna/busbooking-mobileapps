@@ -17,12 +17,14 @@
  **************************************************************************/
 package com.adobe.busbooking;
 
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 
 import com.adobe.marketing.mobile.Audience;
+import com.adobe.marketing.mobile.MobileCore;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +37,7 @@ import java.util.Map;
  */
 public class SecondActivity extends AppCompatActivity {
 
-    private Map<String, String> signals = new HashMap<String, String>();
+    private Map<String, String> digitalData = new HashMap<String, String>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,7 +45,7 @@ public class SecondActivity extends AppCompatActivity {
         setContentView(R.layout.activity_second);
         setUpToolBar();
 
-        Audience.signalWithData(signals, null);
+        MobileCore.trackState("Home screen", digitalData);
     }
 
     private void setUpToolBar() {
@@ -57,9 +59,26 @@ public class SecondActivity extends AppCompatActivity {
             }
         });
 
-        signals.put("view", toolbar.getTitle().toString());
+        digitalData.put("busBooking.page.name", "Booking Details");
+        trackProduct(digitalData);
     }
 
+    private void trackProduct(Map<String, String> digitalData) {
+        Map<String, String> product = new HashMap<>();
+        product.put("id", "24D334");
+        product.put("name", "Chartered Bus");
+        product.put("category", "Volvo A/C Multi Axle (2+2)");
+        product.put("quantity", "3");
+        product.put("totalPrice", "1900");
+
+        digitalData.put("&&products", getAnalyticsProductString(product.get("id"), product.get("name"), product.get("category"), product.get("quantity"), product.get("totalPrice")));
+        digitalData.put("&&events", "prodView");
+    }
+
+    @NonNull
+    private String getAnalyticsProductString(String id, String name, String category, String quantity, String totalValue) {
+        return String.format("%s;%s;%s;%s;%s", id, name, category, quantity, totalValue);
+    }
 
     @Override
     protected void onResume() {

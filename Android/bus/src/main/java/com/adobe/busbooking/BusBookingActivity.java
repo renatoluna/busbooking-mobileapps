@@ -19,6 +19,7 @@ package com.adobe.busbooking;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -30,16 +31,13 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import com.adobe.marketing.mobile.AdobeCallback;
-import com.adobe.marketing.mobile.Audience;
+
+import com.adobe.marketing.mobile.Analytics;
 import com.adobe.marketing.mobile.Identity;
-import com.adobe.marketing.mobile.InvalidInitException;
-import com.adobe.marketing.mobile.Lifecycle;
-import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
-import com.adobe.marketing.mobile.Signal;
-import com.adobe.marketing.mobile.UserProfile;
+import com.adobe.marketing.mobile.Target;
 import com.adobe.marketing.mobile.VisitorID;
+import com.google.common.base.Joiner;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,21 +49,23 @@ public class BusBookingActivity extends AppCompatActivity {
 
     private TextView mTextGoingTo, mTextLeavingFrom, mTextSource, mTextDestination;
     private ImageButton mBtnFlip;
-    private Map<String, String> signals = new HashMap<String, String>();
+    private Map<String, String> digitalData = new HashMap<String, String>();
+    private String DATA_SOURCE_IDENTIFIER = "lunaID";
+    private String userID = "euhv2x83tq";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Identity.syncIdentifier("idName", "userID1234", VisitorID.AuthenticationState.UNKNOWN);
+        initialAnalyticsTrackState();
 
         setContentView(R.layout.activity_bus_booking);
         setUpToolBar();
-        mTextGoingTo =  findViewById(R.id.text_going_to);
-        mTextLeavingFrom =  findViewById(R.id.text_leaving_from);
-        mTextDestination =  findViewById(R.id.text_destination);
-        mTextSource =  findViewById(R.id.text_source);
-        mBtnFlip =  findViewById(R.id.btn_flip);
+        mTextGoingTo = findViewById(R.id.text_going_to);
+        mTextLeavingFrom = findViewById(R.id.text_leaving_from);
+        mTextDestination = findViewById(R.id.text_destination);
+        mTextSource = findViewById(R.id.text_source);
+        mBtnFlip = findViewById(R.id.btn_flip);
 
         mBtnFlip.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -101,13 +101,57 @@ public class BusBookingActivity extends AppCompatActivity {
         setDest("Las Vegas");
 
 
-        Audience.signalWithData(signals, null);
+//        Audience.signalWithData(signals, null);
     }
 
+    private void initialAnalyticsTrackState() {
+        syncUserInfo("authenticated");
+        digitalData.put("busBooking.app.name", "Bus Booking");
+        digitalData.put("busBooking.app.tech", getAppTech());
+        digitalData.put("busBooking.page.name", "Home Screen");
+        MobileCore.trackState("Home screen", digitalData);
+    }
+
+    private void syncUserInfo(String authState) {
+        digitalData.put("busBooking.user.authState", authState);
+        digitalData.put("busBooking.user.profile", DATA_SOURCE_IDENTIFIER);
+        Identity.syncIdentifier(DATA_SOURCE_IDENTIFIER, userID, (VisitorID.AuthenticationState) getAuthenticationState(authState));
+    }
+
+    private Enum getAuthenticationState(String authState) {
+        Enum authenticationState;
+        switch (authState) {
+            case "authenticated":
+                authenticationState = VisitorID.AuthenticationState.AUTHENTICATED;
+                break;
+            case "logged_out":
+                authenticationState = VisitorID.AuthenticationState.LOGGED_OUT;
+                break;
+            default:
+                authenticationState = VisitorID.AuthenticationState.UNKNOWN;
+                break;
+        }
+        return authenticationState;
+    }
+
+    private String getAppTech() {
+        Map<String, String> extensions = new HashMap<>();
+        extensions.put("Core", MobileCore.extensionVersion());
+        extensions.put("AA", Analytics.extensionVersion());
+        extensions.put("AT", Target.extensionVersion());
+        extensions.put("ECID", Identity.extensionVersion());
+        return getAnalyticsStringFromMap(extensions);
+    }
+
+    @NonNull
+    private String getAnalyticsStringFromMap(Map<String, String> map) {
+        Joiner.MapJoiner appTech = Joiner.on(":").withKeyValueSeparator("|");
+        return appTech.join(map);
+    }
 
     private void setUpToolBar() {
 
-        Toolbar toolbar =  findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setNavigationIcon(R.drawable.abc_ic_ab_back_material);
 
         toolbar.setTitle("Bus Booking");
@@ -118,7 +162,7 @@ public class BusBookingActivity extends AppCompatActivity {
             }
         });
 
-        signals.put("view", toolbar.getTitle().toString());
+        digitalData.put("view", toolbar.getTitle().toString());
     }
 
 
@@ -232,7 +276,7 @@ public class BusBookingActivity extends AppCompatActivity {
         mTextGoingTo.setVisibility(View.VISIBLE);
         mTextDestination.setText(city);
         mTextDestination.setTextColor(ContextCompat.getColor(this, R.color.black_opac));
-        signals.put("destination", city);
+        digitalData.put("destination", city);
 
     }
 
@@ -241,7 +285,7 @@ public class BusBookingActivity extends AppCompatActivity {
         mTextLeavingFrom.setVisibility(View.VISIBLE);
         mTextSource.setText(city);
         mTextSource.setTextColor(ContextCompat.getColor(this, R.color.black_opac));
-        signals.put("source", city);
+        digitalData.put("source", city);
     }
 
 
