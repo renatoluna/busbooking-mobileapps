@@ -11,12 +11,24 @@ android {
         multiDexEnabled true
         versionCode 1
         versionName "1.0"
-        buildConfigField("String", "ADOBE_LAUNCH_ID", ADOBE_LAUNCH_ID)
     }
 
     buildTypes {
+        debug {
+            minifyEnabled false
+            buildConfigField("String", "ADOBE_LAUNCH_ID", ADOBE_LAUNCH_DEV_ID)
+            proguardFiles getDefaultProguardFile('proguard-android.txt'),
+                    'proguard-rules.pro'
+        }
+        staging {
+            minifyEnabled false
+            buildConfigField("String", "ADOBE_LAUNCH_ID", ADOBE_LAUNCH_STG_ID)
+            proguardFiles getDefaultProguardFile('proguard-android.txt'),
+                    'proguard-rules.pro'
+        }
         release {
             minifyEnabled false
+            buildConfigField("String", "ADOBE_LAUNCH_ID", ADOBE_LAUNCH_PRD_ID)
             proguardFiles getDefaultProguardFile('proguard-android.txt'),
             'proguard-rules.pro'
         }
