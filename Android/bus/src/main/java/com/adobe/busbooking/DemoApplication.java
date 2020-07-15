@@ -34,6 +34,8 @@ import com.adobe.marketing.mobile.UserProfile;
 
 public class DemoApplication extends Application {
 
+    private static final String ADOBE_LAUNCH_ID = BuildConfig.ADOBE_LAUNCH_ID;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -51,7 +53,7 @@ public class DemoApplication extends Application {
             MobileCore.start(new AdobeCallback () {
                 @Override
                 public void call(Object o) {
-                    MobileCore.configureWithAppID("YOURENVIRONMENTID");
+                    MobileCore.configureWithAppID(ADOBE_LAUNCH_ID);
                 }
             });
         } catch(InvalidInitException e){}
