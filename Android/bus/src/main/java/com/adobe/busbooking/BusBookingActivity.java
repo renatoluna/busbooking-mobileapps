@@ -18,8 +18,8 @@
 package com.adobe.busbooking;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -29,18 +29,22 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-import com.adobe.marketing.mobile.Analytics;
-import com.adobe.marketing.mobile.Identity;
+import com.adobe.marketing.mobile.AdobeCallback;
 import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.Target;
-import com.adobe.marketing.mobile.VisitorID;
-import com.google.common.base.Joiner;
+import com.adobe.marketing.mobile.TargetParameters;
+import com.adobe.marketing.mobile.TargetRequest;
 
-import java.util.HashMap;
-import java.util.Map;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This activity class is responsible to show booking engine page and offer card.
@@ -48,16 +52,18 @@ import java.util.Map;
 public class BusBookingActivity extends AppCompatActivity {
 
     private TextView mTextGoingTo, mTextLeavingFrom, mTextSource, mTextDestination;
+    private Button btn_find_buses;
     private ImageButton mBtnFlip;
-    private Map<String, String> digitalData = new HashMap<String, String>();
-    private String DATA_SOURCE_IDENTIFIER = "lunaID";
-    private String userID = "euhv2x83tq";
+    private CheckBox chk_premium_only;
+    private AdobeUtils adobe = new AdobeUtils();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        initialAnalyticsTrackState();
+        adobe.init();
+        adobe.syncUserIdentifiers("authenticated", "euhv2x83tq");
+        adobe.setMboxName("mbox-home-page");
 
         setContentView(R.layout.activity_bus_booking);
         setUpToolBar();
@@ -98,56 +104,63 @@ public class BusBookingActivity extends AppCompatActivity {
         });
 
         setSource("San Francisco");
-        setDest("Las Vegas");
+        setDest("Mexico");
 
-
-//        Audience.signalWithData(signals, null);
-    }
-
-    private void initialAnalyticsTrackState() {
-        syncUserInfo("authenticated");
-        digitalData.put("busBooking.app.name", "Bus Booking");
-        digitalData.put("busBooking.app.tech", getAppTech());
-        digitalData.put("busBooking.page.name", "Home Screen");
-        MobileCore.trackState("Home screen", digitalData);
-    }
-
-    private void syncUserInfo(String authState) {
-        digitalData.put("busBooking.user.authState", authState);
-        digitalData.put("busBooking.user.profile", DATA_SOURCE_IDENTIFIER);
-        Identity.syncIdentifier(DATA_SOURCE_IDENTIFIER, userID, (VisitorID.AuthenticationState) getAuthenticationState(authState));
-    }
-
-    private Enum getAuthenticationState(String authState) {
-        Enum authenticationState;
-        switch (authState) {
-            case "authenticated":
-                authenticationState = VisitorID.AuthenticationState.AUTHENTICATED;
-                break;
-            case "logged_out":
-                authenticationState = VisitorID.AuthenticationState.LOGGED_OUT;
-                break;
-            default:
-                authenticationState = VisitorID.AuthenticationState.UNKNOWN;
-                break;
+        try {
+            adobe.getExperience(getDefaultContent(), null, personalize);
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
-        return authenticationState;
     }
 
-    private String getAppTech() {
-        Map<String, String> extensions = new HashMap<>();
-        extensions.put("Core", MobileCore.extensionVersion());
-        extensions.put("AA", Analytics.extensionVersion());
-        extensions.put("AT", Target.extensionVersion());
-        extensions.put("ECID", Identity.extensionVersion());
-        return getAnalyticsStringFromMap(extensions);
+    private String getDefaultContent() throws JSONException {
+        JSONObject defaultContent = new JSONObject();
+        JSONObject header = new JSONObject();
+        header.put("color", "#000000");
+        defaultContent.put("header",  header);
+
+        JSONObject button = new JSONObject();
+        button.put("text", "Get bus");
+        button.put("textColor", "#000000");
+        button.put("backgroundColor", "#4CAF50");
+        defaultContent.put("button",  header);
+
+        defaultContent.put("premium",  "false");
+
+        JSONObject location = new JSONObject();
+        button.put("country", "USA");
+        button.put("state", "California");
+        button.put("city", "San Francisco");
+        defaultContent.put("location",  location);
+
+        defaultContent.put("source", "San Francisco");
+        defaultContent.put("destination", "Las Vegas");
+        return defaultContent.toString();
     }
 
-    @NonNull
-    private String getAnalyticsStringFromMap(Map<String, String> map) {
-        Joiner.MapJoiner appTech = Joiner.on(":").withKeyValueSeparator("|");
-        return appTech.join(map);
-    }
+    private AdobeCallback personalize = new AdobeCallback() {
+        @Override
+        public void call(Object response) {
+            try {
+                JSONObject experience = new JSONObject((String) response);
+                chk_premium_only = findViewById(R.id.chk_premium_only);
+                chk_premium_only.setChecked(Boolean.valueOf((String) experience.get("premium")));
+                adobe.addData("page", "search.nonstop", (String) experience.get("premium"));
+
+                setSourceText((String) experience.get("source"), R.color.black_opac);
+                setDestinationText((String) experience.get("destination"), R.color.black_opac);
+
+                JSONObject button = (JSONObject) experience.get("button");
+                btn_find_buses = findViewById(R.id.btn_find_buses);
+                btn_find_buses.setText((String) button.get("text"));
+                btn_find_buses.setBackgroundColor(Color.parseColor((String) button.get("backgroundColor")));
+
+                adobe.trackView("Home Screen");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    };
 
     private void setUpToolBar() {
 
@@ -155,16 +168,14 @@ public class BusBookingActivity extends AppCompatActivity {
         toolbar.setNavigationIcon(R.drawable.abc_ic_ab_back_material);
 
         toolbar.setTitle("Bus Booking");
+        adobe.addData("page", "toolbar", (String) toolbar.getTitle());
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onBackPressed();
             }
         });
-
-        digitalData.put("view", toolbar.getTitle().toString());
     }
-
 
     public void flipSourceDesti() {
 
@@ -261,31 +272,43 @@ public class BusBookingActivity extends AppCompatActivity {
         mTextDestination.startAnimation(forGoingToIn);
     }
 
-
     /**
      * Interchange
      */
     private void updateCities() {
-        String strTemp = mTextSource.getText().toString().trim();
-        mTextSource.setText(mTextDestination.getText().toString().trim());
-        mTextDestination.setText(strTemp);
+        String oldSource = mTextSource.getText().toString().trim();
+        setSourceText(mTextDestination.getText().toString().trim(), R.color.black_opac);
+        setDestinationText(oldSource, R.color.black_opac);
     }
 
 
     private void setDest(String city) {
         mTextGoingTo.setVisibility(View.VISIBLE);
-        mTextDestination.setText(city);
-        mTextDestination.setTextColor(ContextCompat.getColor(this, R.color.black_opac));
-        digitalData.put("destination", city);
-
+        setDestinationText(city, R.color.black_opac);
     }
 
 
     private void setSource(String city) {
         mTextLeavingFrom.setVisibility(View.VISIBLE);
-        mTextSource.setText(city);
-        mTextSource.setTextColor(ContextCompat.getColor(this, R.color.black_opac));
-        digitalData.put("source", city);
+        setSourceText(city, R.color.black_opac);
+    }
+
+    private void setSourceText(String city, Integer color) {
+        setFieldText(city, color, (TextView) findViewById(R.id.text_source), "source");
+    }
+
+    private void setDestinationText(String city, Integer color) {
+        setFieldText(city, color, (TextView) findViewById(R.id.text_destination), "destination");
+    }
+
+    private void setFieldText(String text, Integer color, TextView textView, String contextData) {
+        textView.setText(capitalize(text));
+        textView.setTextColor(ContextCompat.getColor(this, color));
+        adobe.addData("page.search", contextData, capitalize(text));
+    }
+
+    private String capitalize(final String line) {
+        return Character.toUpperCase(line.charAt(0)) + line.substring(1);
     }
 
 
